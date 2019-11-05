@@ -1,1 +1,2 @@
 - Refactor beam angle functions to use dive direction not pitch angle
+- take data from each adcp profile and make a class instance. Collect these in a dictionary keyed by the mission overview index or similar
