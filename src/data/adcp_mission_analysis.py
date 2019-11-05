@@ -1,11 +1,16 @@
 """
 Functions to anlyse the bulk data from the whole adcp_mission_overview
 """
+import sys
 import numpy as np
 import pandas as pd
 from netCDF4 import Dataset
 from pathlib import Path
-from data.beam_mapping import beam2enu, beam_from_center
+data_dir = Path(__file__).parent.absolute()
+sys.path.append(str(data_dir))
+from beam_mapping import beam2enu, beam_from_center
+print(data_dir)
+
 
 def list_yos(working_dir):
     yos_path = working_dir.rglob("*cp*.nc")
