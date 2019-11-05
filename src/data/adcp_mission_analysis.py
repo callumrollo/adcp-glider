@@ -7,10 +7,10 @@ import pandas as pd
 from netCDF4 import Dataset
 from pathlib import Path
 try:
-    data_dir = Path(__file__).parent.parent.parent.absolute()
+    library_dir = Path(__file__).parent.parent.parent.absolute()
 except NameError:
-    data_dir = Path('/media/callum/storage/Documents/adcp-glider/')
-sys.path.append(str(data_dir))
+    library_dir = Path('/media/callum/storage/Documents/adcp-glider/')
+sys.path.append(str(library_dir))
 from src.data.beam_mapping import beam2enu, beam_from_center
 
 
