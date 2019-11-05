@@ -7,11 +7,11 @@ import pandas as pd
 from netCDF4 import Dataset
 from pathlib import Path
 try:
-    data_dir = Path(__file__).parent.parent.absolute()
+    data_dir = Path(__file__).parent.parent.parent.absolute()
 except NameError:
-    data_dir = Path('/media/callum/storage/Documents/adcp-glider/src/data')
+    data_dir = Path('/media/callum/storage/Documents/adcp-glider/')
 sys.path.append(str(data_dir))
-from data.beam_mapping import beam2enu, beam_from_center
+from src.data.beam_mapping import beam2enu, beam_from_center
 
 
 def list_yos(working_dir):
@@ -37,7 +37,8 @@ def list_yos(working_dir):
             dives[i] = np.nan
             climbs[i] = 1
     return yos, yos_identifier, dive_limb, dives, climbs
-working_dir = data_dir.parent
+
+
 def adcp_mission_overview(working_dir):
     yos_paths, yos_identifier, dive_limb, dive, climb = list_yos(working_dir)
     mission_summary = pd.DataFrame({'file_path': yos_paths,
