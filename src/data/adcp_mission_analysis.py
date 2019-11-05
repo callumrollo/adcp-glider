@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 from netCDF4 import Dataset
 from pathlib import Path
-data_dir = Path(__file__).parent.parent.absolute()
+try:
+    data_dir = Path(__file__).parent.parent.absolute()
+except NameError:
+    data_dir = Path('/media/callum/storage/Documents/adcp-glider/src/data')
 sys.path.append(str(data_dir))
 from data.beam_mapping import beam2enu, beam_from_center
 
