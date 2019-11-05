@@ -37,7 +37,7 @@ def list_yos(working_dir):
             dives[i] = np.nan
             climbs[i] = 1
     return yos, yos_identifier, dive_limb, dives, climbs
-working_dir = Path("/media/callum/hd/Documents/sg637/ad2cp_nc/2018-11-20_nosims/")
+working_dir = data_dir.parent
 def adcp_mission_overview(working_dir):
     yos_paths, yos_identifier, dive_limb, dive, climb = list_yos(working_dir)
     mission_summary = pd.DataFrame({'file_path': yos_paths,
