@@ -75,7 +75,8 @@ def adcp_import_data(working_dir):
                                     'ascent': climb,},
                                     index=yos_identifier)
     # Make an empty dict for more detail
-    adcp_profiles_dict = {}
+    adcp_profiles_dict_temp = {}
+    profiles_dict = {}
     # Expand mission_summary by adding extra columns for profile properties
     extras_list = ['powerusage_mW', 'mem_usage_MB_per_hour', 'cell_size',
                    'measurement_interval', 'num_cells', 'num_pings',
@@ -97,16 +98,20 @@ def adcp_import_data(working_dir):
         adcp_dict['num_pings'] = config.avg_nPings
         adcp_dict['blank_dist'] = config.avg_blankingDistance
         adcp_dict['vert_direction'] = direction_num_to_climb_phase(config.plan_verticalDirection)
-        adcp_profiles_dict[index] = adcp_dict
+        adcp_profiles_dict_temp[index] = adcp_dict
 
-    # Add this per profile info to the mission summary
+        profile = {}
+
+    # Add the per profile info to the mission summary
     for extra in extras_list:
         series_list = []
-        for key in adcp_profiles_dict.keys():
-            adcp_dict = adcp_profiles_dict[key]
+        for key in adcp_profiles_dict_temp.keys():
+            adcp_dict = adcp_profiles_dict_temp[key]
             series_list.append(adcp_dict[extra])
         mission_summary[extra] = series_list
 
     # Datafrmae can only accept things that are constant for each profile.
     # Everyting else will go in a dictionary
     return mission_summary
+
+def adcp_profile_data(mission_summary):
