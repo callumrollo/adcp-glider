@@ -27,7 +27,7 @@ def list_yos(working_dir):
         yos_list.append(str(path))
     if len(yos_list) == 0:
         print('Did not find any adcp files of pattern cp*.nc. Aborting')
-        exit(1)
+        return
     yos = np.sort(yos_list)
     dive_limb = np.empty(len(yos), dtype=str)
     # Add column for descent (a) vs ascent (b)
@@ -98,6 +98,7 @@ def adcp_import_data(working_dir):
         ad2cp_dataset = Dataset(file_path, "r", format="NETCDF4")
         ad2cp_groups = ad2cp_dataset.groups
         config = ad2cp_groups['Config']
+        adcp_dict['averaging_interval'] = config.avg_averagingInterval
         adcp_dict['powerusage_mW'] = config.avg_powerUsage
         adcp_dict['mem_usage_MB_per_hour'] = config.avg_memoryUsage
         adcp_dict['cell_size'] = config.avg_cellSize

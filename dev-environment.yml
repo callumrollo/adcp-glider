@@ -1,0 +1,17 @@
+name: dev-adcp-glider
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.5
+  - ipython
+  - jupyter
+  - numpy
+  - matplotlib
+  - pandas
+  - xarray
+  - netcdf4
+  - pip
+  - sphinx
+  - coverage
+  - click
+  - flake8
