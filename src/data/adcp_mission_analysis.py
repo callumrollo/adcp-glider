@@ -87,7 +87,7 @@ def adcp_import_data(working_dir):
     # Dictionary for detailed info of each dive
     profiles_dict = {}
     # Expand mission_summary by adding extra columns for profile properties
-    extras_list = ['powerusage_mW', 'mem_usage_MB_per_hour', 'cell_size',
+    extras_list = ['averaging_interval', 'powerusage_mW', 'mem_usage_MB_per_hour', 'cell_size',
                    'measurement_interval', 'num_cells', 'num_pings',
                    'blank_dist', 'vert_direction']
     # Intialise the data dictionary
@@ -171,7 +171,7 @@ def adcp_import_data(working_dir):
 ################################################################################
 
 
-working_dir = library_dir / 'data' / 'raw'
+working_dir = library_dir / 'data' / '2019-12-12'
 mission_summary, profiles_dict = adcp_import_data(working_dir)
 
 def adcp_profile_data(mission_summary):
