@@ -65,6 +65,8 @@ class adcp_profile:
     cor_beam: float
     amp_beam: float
     vel_beam: float
+    #vel_enu: float
+    beam_miss: float
     beam_number: float
     pressure: float
     glider_z: float
@@ -76,7 +78,7 @@ def adcp_import_data(working_dir):
     :param working_dir: Path to the directory where your adcp *.nc files are stored
     :return: A dataframe of per profile info and a dictionary of adcp profiles with keys from the mission overview index
     """
-    # First get the paths to the adcp files and some absic info
+    # First get the paths to the adcp files and some basic info
     yos_paths, yos_identifier, dive_limb = list_yos(working_dir)
     mission_summary = pd.DataFrame({'file_path': yos_paths,
                                     'dive_limb': dive_limb, },
@@ -134,7 +136,6 @@ def adcp_import_data(working_dir):
             vel_beam[:, :, i] = data_av[beam_properties[0] + str(i + 1)][:, :]
             amp_beam[:, :, i] = data_av[beam_properties[1] + str(i + 1)][:, :]
             cor_beam[:, :, i] = data_av[beam_properties[2] + str(i + 1)][:, :]
-
         # z determination from pressure (dbars) fudge factor offset used here.
         # should really use glider's density profile
         pressure = data_av["Pressure"][:]
@@ -151,10 +152,14 @@ def adcp_import_data(working_dir):
         roll = data_av["Roll"][:]
         heading = data_av["Heading"][:]
         beam_number = data_av["Physicalbeam"][:, :]
+       # vel_enu = beam2enu(vel_beam, pitch, roll, heading, dive_limb = adcp_dict['vert_direction'])
+        beam_miss = beam_from_center(np.transpose(np.tile(pitch,(len(cell_center),1))),
+                                     np.transpose(np.tile(roll,(len(cell_center),1))),
+                                     np.tile(cell_center, (len(pitch),1)))
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               beam_number, pressure, glider_z, ad2cp_dict)
+                               beam_miss, beam_number, pressure, glider_z, ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
