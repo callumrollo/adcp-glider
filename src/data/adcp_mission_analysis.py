@@ -171,8 +171,8 @@ def adcp_import_data(working_dir):
 ################################################################################
 
 
-working_dir = library_dir / 'data' / '2019-12-12'
-mission_summary, profiles_dict = adcp_import_data(working_dir)
+#working_dir = library_dir / 'data' / '2019-12-12'
+#mission_summary, profiles_dict = adcp_import_data(working_dir)
 
-def adcp_profile_data(mission_summary):
-    return mission_summary
+#def adcp_profile_data(mission_summary):
+#    return mission_summary
