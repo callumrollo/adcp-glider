@@ -85,12 +85,12 @@ def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
     beam = np.transpose(np.array(beam_v))
     if dive_limb == "Descent":
-        v_ENU_rot = rotate_head(heading) * rotate_roll(roll) * rotate_pitch(
-            pitch) * beam2xyz_nor_desce
+        v_ENU_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(
+            pitch)).dot(beam2xyz_nor_desce)
         v_ENU = v_ENU_rot.dot(beam)
     elif dive_limb == "Ascent":
-        v_ENU_rot  = rotate_head(heading) * rotate_roll(roll) * rotate_pitch(
-            pitch) * beam2xyz_nor_climb * beam
+        v_ENU_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(
+            pitch)).dot(beam2xyz_nor_climb)
         v_ENU = v_ENU_rot.dot(beam)
     else:
         print('Must specify  dive direction')
