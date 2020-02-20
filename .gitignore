@@ -87,3 +87,4 @@ data/raw/*.
 
 # Mypy cache
 .mypy_cache/
+notebooks/scratch.ipynb
