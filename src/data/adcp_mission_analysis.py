@@ -182,7 +182,9 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
     """
     beam_attrs = pd.DataFrame(index=mission_summary.index, columns=['cor_beam_1', 'cor_beam_2', 'cor_beam_3',
                                                              'cor_beam_4', 'amp_beam_1', 'amp_beam_2',
-                                                             'amp_beam_3', 'amp_beam_4', 'beam_miss'])
+                                                             'amp_beam_3', 'amp_beam_4', 'beam_miss',
+                                                            'pitch', 'roll', 'heading',
+                                                                   'good_angle'])
     for cycle in mission_summary.index:
         cycle_dict = profiles_dict[cycle].ad2cp_dict
         physical_beam = cycle_dict['Physicalbeam'][0, :]
@@ -203,6 +205,10 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
             beam_attrs.amp_beam_2[cycle] = np.nanmean(amps[:, 5, 1])
             beam_attrs.amp_beam_4[cycle] = np.nanmean(amps[:, 5, 2])
         beam_attrs.beam_miss[cycle] = np.nanmean(profiles_dict[cycle].beam_miss[:,5])
+        beam_attrs.pitch[cycle] = np.nanmean(np.abs(profiles_dict[cycle].pitch))
+        beam_attrs.roll[cycle] = np.nanmean(np.abs(profiles_dict[cycle].roll))
+        beam_attrs.heading[cycle] = np.nanmean(profiles_dict[cycle].heading)
+        beam_attrs.good_angle[cycle] = 100*sum(profiles_dict[cycle].beam_miss[:,5]<1.0)/len(profiles_dict[cycle].beam_miss)
     if combine:
         mission_summary = mission_summary.join(beam_attrs)
         return mission_summary
