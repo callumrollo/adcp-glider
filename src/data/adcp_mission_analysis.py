@@ -65,7 +65,7 @@ class adcp_profile:
     cor_beam: float
     amp_beam: float
     vel_beam: float
-    #vel_enu: float
+    vel_enu: float
     beam_miss: float
     beam_number: float
     pressure: float
@@ -152,14 +152,20 @@ def adcp_import_data(working_dir):
         roll = data_av["Roll"][:]
         heading = data_av["Heading"][:]
         beam_number = data_av["Physicalbeam"][:, :]
-       # vel_enu = beam2enu(vel_beam, pitch, roll, heading, dive_limb = adcp_dict['vert_direction'])
+        vel_enu = copy.deepcopy(vel_beam)
+        vel_enu[:] = np.nan
+        for sample in np.arange(np.size(vel_beam, 0)):
+            for cell in np.arange(np.size(vel_beam, 1)):
+                vel_enu[sample, cell, :] = beam2enu(vel_beam[sample, cell, :], pitch[sample], roll[sample],
+                                                    heading[sample], dive_limb=adcp_dict['vert_direction'])
+
         beam_miss = beam_from_center(np.transpose(np.tile(pitch,(len(cell_center),1))),
                                      np.transpose(np.tile(roll,(len(cell_center),1))),
                                      np.tile(cell_center, (len(pitch),1)))
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               beam_miss, beam_number, pressure, glider_z, ad2cp_dict)
+                               vel_enu, beam_miss, beam_number, pressure, glider_z, ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
@@ -205,7 +211,7 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
             beam_attrs.amp_beam_2[cycle] = np.nanmean(amps[:, 5, 1])
             beam_attrs.amp_beam_4[cycle] = np.nanmean(amps[:, 5, 2])
         beam_attrs.beam_miss[cycle] = np.nanmean(profiles_dict[cycle].beam_miss[:,5])
-        beam_attrs.pitch[cycle] = np.nanmean(np.abs(profiles_dict[cycle].pitch))
+        beam_attrs.pitch[cycle] = np.nanmean(profiles_dict[cycle].pitch)
         beam_attrs.roll[cycle] = np.nanmean(np.abs(profiles_dict[cycle].roll))
         beam_attrs.heading[cycle] = np.nanmean(profiles_dict[cycle].heading)
         beam_attrs.good_angle[cycle] = 100*sum(profiles_dict[cycle].beam_miss[:,5]<1.0)/len(profiles_dict[cycle].beam_miss)
@@ -216,9 +222,3 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         return beam_attrs
 ################################################################################
 
-celll_corrs = pd.DataFrame
-#working_dir = library_dir / 'data' / '2019-12-12'
-#mission_summary, profiles_dict = adcp_import_data(working_dir)
-
-#def adcp_profile_data(mission_summary):
-#    return mission_summary
