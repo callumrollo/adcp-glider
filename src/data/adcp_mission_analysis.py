@@ -17,7 +17,8 @@ except NameError:
     library_dir = Path('/media/callum/storage/Documents/adcp-glider/')
 sys.path.append(str(library_dir))
 from src.data.beam_mapping import beam2enu, beam_from_center
-
+# todo hard coded for now. Will fix
+mission_lat = 13
 
 def list_yos(working_dir):
     yos_path = working_dir.rglob("*cp*.nc")
@@ -70,6 +71,7 @@ class adcp_profile:
     beam_number: float
     pressure: float
     glider_z: float
+    glider_w: float
     ad2cp_dict: dict
 
 def adcp_import_data(working_dir):
@@ -141,7 +143,13 @@ def adcp_import_data(working_dir):
         pressure = data_av["Pressure"][:]
         # glider_z = 0.7 + gsw.z_from_p(pressure, 50)
         # todo # Sort out gsw and document how to get it
-        glider_z = pressure*10
+        glider_z =  gsw.z_from_p(pressure,mission_lat)
+        dz = glider_z[1:] - glider_z[:-1]
+        dt_datetime = time[1:] - time[:-1]
+        dt_sec = []
+        for timepoint in dt_datetime:
+            dt_sec.append(timepoint.seconds)
+        glider_w = dz / dt_sec
         measurement_z = np.transpose(
             np.tile(np.array(glider_z), (len(cell_center), 1))
         ) - np.tile(np.array(cell_center), (len(glider_z), 1))
@@ -165,7 +173,7 @@ def adcp_import_data(working_dir):
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_enu, beam_miss, beam_number, pressure, glider_z, ad2cp_dict)
+                               vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
