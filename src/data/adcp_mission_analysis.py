@@ -7,6 +7,7 @@ import pandas as pd
 import copy
 import gsw
 from netCDF4 import Dataset
+import xarray as xr
 from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -71,8 +72,36 @@ class adcp_profile:
     beam_number: float
     pressure: float
     glider_z: float
-    glider_w: float
+    glider_w_from_p: float
     ad2cp_dict: dict
+
+def read_glider_nc(glider_dir):
+    yos_path = glider_dir.rglob("p*.nc")
+    yos_list = []
+    for path in yos_path:
+        yos_list.append(str(path))
+    nets = np.sort(yos_list)
+    dive_nums, pressure, time, roll, pitch, heading = [], [], [], [], [], []
+
+    for net in nets:
+        nc = xr.open_dataset(net)
+        dive_num = net[-7:-3]
+        dive_nums = dive_nums + list(np.tile(dive_num,(1,len(nc.pressure)))[0])
+        time = time + list(nc.time.data)
+        pressure = pressure + list(nc.pressure.data)
+        roll = roll + list(nc.eng_rollAng.data)
+        pitch = pitch +list(nc.eng_pitchAng.data)
+        heading = heading + list(nc.eng_head.data)
+        temp = nc.temperature.data
+        conductivity = nc.conductivity.data
+        lon = nc.longitude
+        lat = nc.latitude
+    glider_df = pd.DataFrame({'dive_num': dive_nums, 'pressure_gl': pressure, 'pitch_gl': pitch, 'roll_gl': roll, 'heading_gl': heading},index=pd.to_datetime(time))
+    return glider_df
+
+
+glider_df = read_glider_nc(Path('/home/callum/Documents/Eureka/data/glider-nc-transfer/full-nc'))
+
 
 def adcp_import_data(working_dir):
     """
@@ -149,7 +178,7 @@ def adcp_import_data(working_dir):
         dt_sec = []
         for timepoint in dt_datetime:
             dt_sec.append(timepoint.seconds)
-        glider_w = dz / dt_sec
+        glider_w_from_p = dz / dt_sec
         measurement_z = np.transpose(
             np.tile(np.array(glider_z), (len(cell_center), 1))
         ) - np.tile(np.array(cell_center), (len(glider_z), 1))
@@ -173,7 +202,7 @@ def adcp_import_data(working_dir):
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w ad2cp_dict)
+                               vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w_from_p, ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
