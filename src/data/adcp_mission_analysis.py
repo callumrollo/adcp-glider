@@ -221,13 +221,15 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
     :param mission_summary: DataFrame of info for each dive cycle
     :param profiles_dict: dictionary of extra data on each dive
     :param combine if True, combines dive averages df wth mission summary df
-    :return: Data frame with information averaged over cell 5, 11 m from the glider
+    :return: Data frame with information averaged over cell 5, 11 m from the glider, dataframe of attitude over time
     """
     beam_attrs = pd.DataFrame(index=mission_summary.index, columns=['cor_beam_1', 'cor_beam_2', 'cor_beam_3',
                                                              'cor_beam_4', 'amp_beam_1', 'amp_beam_2',
                                                              'amp_beam_3', 'amp_beam_4', 'beam_miss',
                                                             'pitch', 'roll', 'heading',
                                                                    'good_angle'])
+
+    cast_num, pressure, time, roll, pitch, heading = [], [], [], [], [], []
     for cycle in mission_summary.index:
         cycle_dict = profiles_dict[cycle].ad2cp_dict
         physical_beam = cycle_dict['Physicalbeam'][0, :]
@@ -252,10 +254,21 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         beam_attrs.roll[cycle] = np.nanmean(np.abs(profiles_dict[cycle].roll))
         beam_attrs.heading[cycle] = np.nanmean(profiles_dict[cycle].heading)
         beam_attrs.good_angle[cycle] = 100*sum(profiles_dict[cycle].beam_miss[:,5]<1.0)/len(profiles_dict[cycle].beam_miss)
+        time = time + list(profiles_dict[cycle].time)
+        cast_num = cast_num + list(np.tile(profiles_dict[cycle].name, (1,len(profiles_dict[cycle].time)))[0])
+        pressure = pressure + list(profiles_dict[cycle].pressure)
+        pitch = pitch + list(profiles_dict[cycle].pitch)
+        roll = roll + list(profiles_dict[cycle].roll)
+        heading = heading + list(profiles_dict[cycle].heading)
+    adcp_df = pd.DataFrame({'cast_num': cast_num, 'pressure_ad': pressure, 'pitch_ad': pitch, 'roll_ad': roll, 'heading_ad': heading},index=pd.to_datetime(time))
+    # hotfix as dive 5 appears to be a bench test...
+    bar = adcp_df[adcp_df.cast_num!='0005a']
+    baz = bar[bar.cast_num!='0005b']
+
     if combine:
         mission_summary = mission_summary.join(beam_attrs)
-        return mission_summary
+        return mission_summary, baz
     else:
-        return beam_attrs
+        return beam_attrs, baz
 ################################################################################
 
