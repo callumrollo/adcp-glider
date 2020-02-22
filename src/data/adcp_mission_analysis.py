@@ -17,7 +17,7 @@ try:
 except NameError:
     library_dir = Path('/media/callum/storage/Documents/adcp-glider/')
 sys.path.append(str(library_dir))
-from src.data.beam_mapping import beam2enu, beam_from_center
+from src.data.beam_mapping import beam2enu, beam_from_center, beam2xyz
 # todo hard coded for now. Will fix
 mission_lat = 13
 
@@ -67,6 +67,7 @@ class adcp_profile:
     cor_beam: float
     amp_beam: float
     vel_beam: float
+    vel_xyz: float
     vel_enu: float
     beam_miss: float
     beam_number: float
@@ -189,20 +190,24 @@ def adcp_import_data(working_dir):
         roll = data_av["Roll"][:]
         heading = data_av["Heading"][:]
         beam_number = data_av["Physicalbeam"][:, :]
+        vel_xyz = copy.deepcopy(vel_beam)
+        vel_xyz[:] = np.nan
+        for sample in np.arange(np.size(vel_beam, 0)):
+            for cell in np.arange(np.size(vel_beam, 1)):
+                vel_xyz[sample, cell, :] = beam2xyz(vel_beam[sample, cell, :], dive_limb=adcp_dict['vert_direction'])
         vel_enu = copy.deepcopy(vel_beam)
         vel_enu[:] = np.nan
         for sample in np.arange(np.size(vel_beam, 0)):
             for cell in np.arange(np.size(vel_beam, 1)):
                 vel_enu[sample, cell, :] = beam2enu(vel_beam[sample, cell, :], pitch[sample], roll[sample],
                                                     heading[sample], dive_limb=adcp_dict['vert_direction'])
-
         beam_miss = beam_from_center(np.transpose(np.tile(pitch,(len(cell_center),1))),
                                      np.transpose(np.tile(roll,(len(cell_center),1))),
                                      np.tile(cell_center, (len(pitch),1)))
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w_from_p, ad2cp_dict)
+                               vel_xyz, vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w_from_p, ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
