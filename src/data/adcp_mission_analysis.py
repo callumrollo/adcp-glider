@@ -274,7 +274,7 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
             profiles_dict[cycle].beam_miss)
         beam_attrs.good_angle_all[cycle] = 100 * sum(profiles_dict[cycle].beam_miss[:, -1] < 1.0) / len(
             profiles_dict[cycle].beam_miss)
-        beam_attrs.good_cor_5[cycle] = 100 * np.nansum(cors[:, 5:, :] > 50) / np.size(cors[:, :5, :])
+        beam_attrs.good_cor_5[cycle] = 100 * np.nansum(cors[:, :5, :] > 50) / np.size(cors[:, :5, :])
         beam_attrs.good_cor_all[cycle] = 100 * np.nansum(cors[:, :, :] > 50) / np.size(cors[:, :, :])
         time = time + list(profiles_dict[cycle].time)
         cast_num = cast_num + list(np.tile(profiles_dict[cycle].name, (1, len(profiles_dict[cycle].time)))[0])
