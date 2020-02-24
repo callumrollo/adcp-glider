@@ -1,2 +1,0 @@
-- Refactor beam angle functions to use dive direction not pitch angle
-- Write tests for beam angle corrections

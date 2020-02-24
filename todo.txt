@@ -1,1 +1,3 @@
-compare pitch, roll heading between glider and adcp
+write tests, especially for beam angle changes
+do naive shear estimate
+pull in full, processed glider data
