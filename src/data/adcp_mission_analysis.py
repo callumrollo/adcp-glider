@@ -317,3 +317,17 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
     else:
         return beam_attrs, baz
 ################################################################################
+def shear_to_vel(shear_v, shear_z, bin_size=10, ref_vel=[0,0,0]):
+    """
+    Function takes scattered shear velocities in three dimensions (can be beam, xyz or enu) with the depths they were
+    taken at. Can specify a bin size in which they will be averaged and a reference velocity (3D) for the profile.
+    :param shear_v: 3 column array of velociy shears
+    :param shear_z: 1 column array of the z location of shear. z positive upward from sea surface
+    :param bin_size: Size of bin to average shear data in
+    :param ref_vel: Reference velocity that pfofile should average to
+    :return: shear velocity profile in three columns, bin centers fro shear profile
+    """
+    bin_edges = np.arange(-1000, 0+bin_size, bin_size)
+    bin_centers = edgetocentre(bin_edges)
+    vel = []
+    return vel, bin_centers

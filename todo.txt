@@ -1,3 +1,4 @@
 write tests, especially for beam angle changes
 do naive shear estimate
 pull in full, processed glider data
+consider rotation corrections to beam centers, include beam_miss? Will afeect shear velocities both from v and z
