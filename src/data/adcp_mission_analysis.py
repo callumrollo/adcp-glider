@@ -59,6 +59,18 @@ def rounder(float_in, n=2):
 rounder = np.vectorize(rounder)
 
 
+def edgetocentre(x_in):
+    x_out = np.array(x_in)
+    return x_out[:-1] + (x_out[1] - x_out[0]) / 2
+
+
+def centretoedge(x_in):
+    x_out = np.array(np.empty(len(x_in) + 1))
+    x_out[:-1] = x_in - (x_in[1] - x_in[0]) / 2
+    x_out[-1] = x_in[-1] + (x_in[1] - x_in[0]) / 2
+    return x_out
+
+
 @dataclass
 class adcp_profile:
     """
@@ -76,6 +88,8 @@ class adcp_profile:
     vel_xyz: float
     vel_enu: float
     beam_miss: float
+    flag: bool
+    shear_one_cell: float
     beam_number: float
     pressure: float
     glider_z: float
@@ -213,10 +227,18 @@ def adcp_import_data(working_dir):
         beam_miss = beam_from_center(np.transpose(np.tile(pitch, (len(cell_center), 1))),
                                      np.transpose(np.tile(roll, (len(cell_center), 1))),
                                      np.tile(cell_center, (len(pitch), 1)))
+        cor_bin = np.nanmin(cor_beam, 2)
+        flag = np.empty((np.shape(cor_beam)), dtype=bool)
+        flag[:] = False
+        flag[cor_bin < 50, :] = True
+        flag[beam_miss > 1, :] = True
+        vel_enu_flag = copy.deepcopy(vel_enu)
+        vel_enu_flag[flag==False] = np.nan
+        shear_one_cell = (vel_enu_flag[:, 1:, :] - vel_enu_flag[:, :-1, :]) / (cell_center[1] - cell_center[0])
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_xyz, vel_enu, beam_miss, beam_number, pressure, glider_z, glider_w_from_p,
+                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, beam_number, pressure, glider_z, glider_w_from_p,
                                ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
