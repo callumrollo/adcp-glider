@@ -233,12 +233,13 @@ def adcp_import_data(working_dir):
         flag[cor_bin < 50, :] = True
         flag[beam_miss > 1, :] = True
         vel_enu_flag = copy.deepcopy(vel_enu)
-        vel_enu_flag[flag==False] = np.nan
+        vel_enu_flag[flag == False] = np.nan
         shear_one_cell = (vel_enu_flag[:, 1:, :] - vel_enu_flag[:, :-1, :]) / (cell_center[1] - cell_center[0])
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, beam_number, pressure, glider_z, glider_w_from_p,
+                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, beam_number, pressure, glider_z,
+                               glider_w_from_p,
                                ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
@@ -316,18 +317,61 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         return mission_summary, baz
     else:
         return beam_attrs, baz
+
+
 ################################################################################
-def shear_to_vel(shear_v, shear_z, bin_size=10, ref_vel=[0,0,0]):
+def shear_bin(shear_v, shear_z, bin_size=10):
     """
     Function takes scattered shear velocities in three dimensions (can be beam, xyz or enu) with the depths they were
     taken at. Can specify a bin size in which they will be averaged and a reference velocity (3D) for the profile.
     :param shear_v: 3 column array of velociy shears
     :param shear_z: 1 column array of the z location of shear. z positive upward from sea surface
     :param bin_size: Size of bin to average shear data in
-    :param ref_vel: Reference velocity that pfofile should average to
     :return: shear velocity profile in three columns, bin centers fro shear profile
     """
-    bin_edges = np.arange(-1000, 0+bin_size, bin_size)
+    bin_edges = np.arange(-1000, 0 + bin_size, bin_size)
     bin_centers = edgetocentre(bin_edges)
-    vel = []
+    shear_av = np.empty((len(bin_centers), 3))
+    shear_av[:] = np.nan
+    for depth_bin in np.arange(len(bin_centers)):
+        vel_in_bin = shear_v[np.logical_and(shear_z > bin_edges[depth_bin], shear_z < bin_edges[depth_bin + 1]), :]
+        if vel_in_bin.size > 0:
+            shear_av[depth_bin, :] = np.nanmedian(vel_in_bin, 0)
+    return shear_av, bin_centers
+
+def shear_to_vel(shear_av, bin_centers, ref_vel=[0, 0, 0]):
+    """
+    Takes vertically binned 3 column shear and a reference velocity. Performs a simple integration of shear
+    and references velocity profile to ref_vel
+    :param shear_av:
+    :param bin_centers:
+    :param ref_vel: Reference velocity that pfofile should average to
+    :return: Velocity of profile, bin centers
+    """
+    vel = np.empty((np.shape(shear_av)))
+    vel[:] = np.nan
+    dz = bin_centers[1]-bin_centers[0]
+    for bin in np.arange(1,len(bin_centers)):
+        vel[bin,:] = np.nansum(vel[bin-1,:], shear_av[bin,:]*dz)
     return vel, bin_centers
+
+
+def shear_to_vel(shear_av, bin_centers, ref_vel=[0, 0, 0]):
+    """
+    Takes vertically binned 3 column shear and a reference velocity. Performs a simple integration of shear
+    and references velocity profile to ref_vel
+    :param shear_av:
+    :param bin_centers:
+    :param ref_vel: Reference velocity that pfofile should average to
+    :return: Velocity of profile, bin centers
+    """
+    nans = np.isnan(shear_av)
+    shear_av[nans] = 0.0
+    vel = np.empty((np.shape(shear_av)))
+    vel[:] = 0
+    dz = bin_centers[1]-bin_centers[0]
+    for bin in np.arange(1,len(bin_centers)):
+        vel[bin,:] = vel[bin-1,:] + shear_av[bin,:]*dz
+    vel[nans] = np.nan
+    vel_referenced = vel - np.tile(np.nanmean(vel,0) - ref_vel,(len(bin_centers),1))
+    return vel_referenced, bin_centers
