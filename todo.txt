@@ -1,5 +1,5 @@
 write tests, especially for beam angle changes
-use multiproc to speed up data import, probably y passing subset dives to adcp_import_data
+use multiproc to speed up data import, probably y passing subset dives to adcp_import_data (doesn't work, can't pickle the data structures)
 do naive shear estimate
 pull in full, processed glider data
 consider rotation corrections to beam centers, include beam_miss? Will afeect shear velocities both from v and z

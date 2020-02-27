@@ -91,7 +91,9 @@ class adcp_profile:
     flag: bool
     shear_one_cell: float
     shear_binned: float
+    no_in_bin: float
     vel_referenced: float
+    vel_z: float
     beam_number: float
     pressure: float
     glider_z: float
@@ -238,13 +240,13 @@ def adcp_import_data(working_dir):
         vel_enu_flag = copy.deepcopy(vel_enu)
         vel_enu_flag[flag == False] = np.nan
         shear_one_cell = (vel_enu_flag[:, 1:, :] - vel_enu_flag[:, :-1, :]) / (cell_center[1] - cell_center[0])
-        shear_binned, shear_cell_center = shear_bin(shear_one_cell,(measurement_z[:,1:] + measurement_z[:,:-1])/2)
-        vel_referenced, __ = shear_to_vel(shear_binned, shear_cell_center)
+        shear_binned, shear_cell_center, vels_in_bin = shear_bin(shear_one_cell,(measurement_z[:,1:] + measurement_z[:,:-1])/2)
+        vel_referenced, vel_z = shear_to_vel(shear_binned, shear_cell_center)
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, shear_binned, vel_referenced,
-                               beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict)
+                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, shear_binned, vels_in_bin, vel_referenced,
+                               vel_z, beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
@@ -335,13 +337,15 @@ def shear_bin(shear_v, shear_z, bin_size=10):
     """
     bin_edges = np.arange(-1000, 0 + bin_size, bin_size)
     bin_centers = edgetocentre(bin_edges)
+    no_in_bin = np.empty((len(bin_centers)))
     shear_av = np.empty((len(bin_centers), 3))
     shear_av[:] = np.nan
     for depth_bin in np.arange(len(bin_centers)):
         vel_in_bin = shear_v[np.logical_and(shear_z > bin_edges[depth_bin], shear_z < bin_edges[depth_bin + 1]), :]
+        no_in_bin[depth_bin] = np.size(vel_in_bin,0)
         if vel_in_bin.size > 0:
             shear_av[depth_bin, :] = np.nanmedian(vel_in_bin, 0)
-    return shear_av, bin_centers
+    return shear_av, bin_centers, no_in_bin
 
 
 def shear_to_vel(shear_av, bin_centers, ref_vel=None):
