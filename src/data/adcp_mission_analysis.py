@@ -100,6 +100,7 @@ class adcp_profile:
     measurement_z: float
     glider_w_from_p: float
     ad2cp_dict: dict
+    amp_binned: float
 
 
 def read_glider_nc(glider_dir):
@@ -232,21 +233,24 @@ def adcp_import_data(working_dir):
         beam_miss = beam_from_center(np.transpose(np.tile(pitch, (len(cell_center), 1))),
                                      np.transpose(np.tile(roll, (len(cell_center), 1))),
                                      np.tile(cell_center, (len(pitch), 1)))
-        cor_bin = np.nanmin(cor_beam, 2)
-        flag = np.empty((np.shape(cor_beam)), dtype=bool)
-        flag[:] = False
-        flag[cor_bin < 50, :] = True
-        flag[beam_miss > 1, :] = True
+        cor_min_by_beam = np.nanmin(cor_beam, 2)
+        flag_bad_data = np.empty((np.shape(cor_beam)), dtype=bool)
+        flag_bad_data[:] = False
+        flag_bad_data[cor_min_by_beam < 50, :] = True
+        flag_bad_data[beam_miss > 1, :] = True
         vel_enu_flag = copy.deepcopy(vel_enu)
-        vel_enu_flag[flag == False] = np.nan
+        vel_enu_flag[flag_bad_data == True] = np.nan
         shear_one_cell = (vel_enu_flag[:, 1:, :] - vel_enu_flag[:, :-1, :]) / (cell_center[1] - cell_center[0])
-        shear_binned, shear_cell_center, vels_in_bin = shear_bin(shear_one_cell,(measurement_z[:,1:] + measurement_z[:,:-1])/2)
+        shear_binned, shear_cell_center, vels_in_bin = bin_attr(shear_one_cell, (measurement_z[:, 1:] + measurement_z[:, :-1]) / 2)
         vel_referenced, vel_z = shear_to_vel(shear_binned, shear_cell_center)
+        amp_flag = copy.deepcopy(amp_beam)
+        amp_flag[flag_bad_data==True] = np.nan
+        amp_binned, __, __ = bin_attr(amp_flag, measurement_z)
         ad2cp_dict = data_av.variables
 
         profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_xyz, vel_enu, beam_miss, flag, shear_one_cell, shear_binned, vels_in_bin, vel_referenced,
-                               vel_z, beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict)
+                               vel_xyz, vel_enu, beam_miss, flag_bad_data, shear_one_cell, shear_binned, vels_in_bin, vel_referenced,
+                               vel_z, beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict, amp_binned)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
@@ -326,14 +330,14 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
 
 
 ################################################################################
-def shear_bin(shear_v, shear_z, bin_size=10):
+def bin_attr(shear_v, shear_z, bin_size=10):
     """
     Function takes scattered shear velocities in three dimensions (can be beam, xyz or enu) with the depths they were
     taken at. Can specify a bin size in which they will be averaged and a reference velocity (3D) for the profile.
     :param shear_v: 3 column array of velociy shears
     :param shear_z: 1 column array of the z location of shear. z positive upward from sea surface
     :param bin_size: Size of bin to average shear data in
-    :return: shear velocity profile in three columns, bin centers fro shear profile
+    :return: shear velocity profile in three columns, bin centers for shear profile, number of samples in each bin
     """
     bin_edges = np.arange(-1000, 0 + bin_size, bin_size)
     bin_centers = edgetocentre(bin_edges)
