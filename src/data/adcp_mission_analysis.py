@@ -88,7 +88,7 @@ class adcp_profile:
     vel_xyz: float
     vel_enu: float
     beam_miss: float
-    flag: bool
+    flag_bad_data: bool
     shear_one_cell: float
     shear_binned: float
     no_in_bin: float

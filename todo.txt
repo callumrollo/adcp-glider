@@ -3,3 +3,8 @@ use multiproc to speed up data import, probably y passing subset dives to adcp_i
 do naive shear estimate
 pull in full, processed glider data
 consider rotation corrections to beam centers, include beam_miss? Will afeect shear velocities both from v and z
+Calculate surface drift and dive average velocity of glider
+Plot return amp against depth
+plot velocity variaility against depth
+correct for speed of sound
+correct for angle of attack and sideslip
