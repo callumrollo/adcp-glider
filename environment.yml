@@ -1,8 +1,6 @@
 name: adcp-glider
-channels:
-  - conda-forge
 dependencies:
-  - python>=3.5
+  - python>=3.7
   - ipython
   - jupyter
   - numpy
