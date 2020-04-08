@@ -78,33 +78,35 @@ def rotate_head(heading):
 
 
 # Coordinate transform from adcp files. config
-beam2xyz_nor_desce = np.array(([ 1.3564, -0.5056, -0.5056],  [0.,     -1.1831,  1.1831],  [0.,      0.5518,  0.5518]))
-beam2xyz_nor_climb = np.array(([ 0.5056, -1.3564,  0.5056], [-1.1831,  0.,      1.1831],  [0.5518,  0.,      0.5518]))
+beam2xyz_nor_desce = np.array(([1.3564, -0.5056, -0.5056], [0., -1.1831, 1.1831], [0., 0.5518, 0.5518]))
+beam2xyz_nor_climb = np.array(([0.5056, -1.3564, 0.5056], [-1.1831, 0., 1.1831], [0.5518, 0., 0.5518]))
+
 
 def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
     beam = np.transpose(np.array(beam_v))
     if dive_limb == "Descent":
-        v_ENU_rot =rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_desce)
-        v_ENU = v_ENU_rot.dot(beam)
+        v_enu_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_desce)
+        v_enu = v_enu_rot.dot(beam)
+        return v_enu
     elif dive_limb == "Ascent":
-        v_ENU_rot  =rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_climb)
-        v_ENU = v_ENU_rot.dot(beam)
+        v_enu_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_climb)
+        v_enu = v_enu_rot.dot(beam)
+        return v_enu
     else:
         print('Must specify  dive direction')
         exit(1)
 
-    return v_ENU
 
 def beam2xyz(beam_v, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
     beam = np.transpose(np.array(beam_v))
     if dive_limb == "Descent":
         v_xyz = beam2xyz_nor_desce.dot(beam)
+        return v_xyz
     elif dive_limb == "Ascent":
         v_xyz = beam2xyz_nor_climb.dot(beam)
+        return v_xyz
     else:
         print('Must specify  dive direction')
         exit(1)
-
-    return v_xyz
