@@ -20,11 +20,9 @@ import numpy as np
 def calc_beam_angles(pitch_angle, roll_angle):
     # Returns angles of each beam from the vertical
     z = np.empty(4)
-    z[0] = np.cos(np.deg2rad(47.5 + pitch_angle)) * np.cos(
-        np.deg2rad(roll_angle))
+    z[0] = np.cos(np.deg2rad(47.5 + pitch_angle)) * np.cos(np.deg2rad(roll_angle))
     z[1] = np.cos(np.deg2rad(25 - roll_angle)) * np.cos(np.deg2rad(pitch_angle))
-    z[2] = np.cos(np.deg2rad(47.5 - pitch_angle)) * np.cos(
-        np.deg2rad(roll_angle))
+    z[2] = np.cos(np.deg2rad(47.5 - pitch_angle)) * np.cos(np.deg2rad(roll_angle))
     z[3] = np.cos(np.deg2rad(25 + roll_angle)) * np.cos(np.deg2rad(pitch_angle))
     angles = np.rad2deg(np.arccos(z))
     return angles
@@ -58,43 +56,66 @@ beam_from_center = np.vectorize(beam_from_center)
 
 def rotate_pitch(pitch):
     return np.array(
-        ((np.cos(np.deg2rad(pitch)), 0, -np.sin(np.deg2rad(pitch))),
-         (0, 1, 0),
-         (np.sin(np.deg2rad(pitch)), 0, np.cos(np.deg2rad(pitch)))))
+        (
+            (np.cos(np.deg2rad(pitch)), 0, -np.sin(np.deg2rad(pitch))),
+            (0, 1, 0),
+            (np.sin(np.deg2rad(pitch)), 0, np.cos(np.deg2rad(pitch))),
+        )
+    )
 
 
 def rotate_roll(roll):
-    return np.array(((1, 0, 0),
-                     (0, np.cos(np.deg2rad(roll)), -np.sin(np.deg2rad(roll))),
-                     (0, np.sin(np.deg2rad(roll)), np.cos(np.deg2rad(roll)))))
+    return np.array(
+        (
+            (1, 0, 0),
+            (0, np.cos(np.deg2rad(roll)), -np.sin(np.deg2rad(roll))),
+            (0, np.sin(np.deg2rad(roll)), np.cos(np.deg2rad(roll))),
+        )
+    )
 
 
 def rotate_head(heading):
-    return np.array(((np.cos(np.deg2rad(-heading + 90)),
-                      -np.sin(np.deg2rad(-heading + 90)), 0),
-                     (np.sin(np.deg2rad(-heading + 90)),
-                      np.cos(np.deg2rad(-heading + 90)), 0),
-                     (0, 0, 1)))
+    return np.array(
+        (
+            (np.cos(np.deg2rad(-heading + 90)), -np.sin(np.deg2rad(-heading + 90)), 0),
+            (np.sin(np.deg2rad(-heading + 90)), np.cos(np.deg2rad(-heading + 90)), 0),
+            (0, 0, 1),
+        )
+    )
 
 
 # Coordinate transform from adcp files. config
-beam2xyz_nor_desce = np.array(([1.3564, -0.5056, -0.5056], [0., -1.1831, 1.1831], [0., 0.5518, 0.5518]))
-beam2xyz_nor_climb = np.array(([0.5056, -1.3564, 0.5056], [-1.1831, 0., 1.1831], [0.5518, 0., 0.5518]))
+beam2xyz_nor_desce = np.array(
+    ([1.3564, -0.5056, -0.5056], [0.0, -1.1831, 1.1831], [0.0, 0.5518, 0.5518])
+)
+beam2xyz_nor_climb = np.array(
+    ([0.5056, -1.3564, 0.5056], [-1.1831, 0.0, 1.1831], [0.5518, 0.0, 0.5518])
+)
 
 
 def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
     beam = np.transpose(np.array(beam_v))
     if dive_limb == "Descent":
-        v_enu_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_desce)
+        v_enu_rot = (
+            rotate_head(heading)
+            .dot(rotate_roll(roll))
+            .dot(rotate_pitch(pitch))
+            .dot(beam2xyz_nor_desce)
+        )
         v_enu = v_enu_rot.dot(beam)
         return v_enu
     elif dive_limb == "Ascent":
-        v_enu_rot = rotate_head(heading).dot(rotate_roll(roll)).dot(rotate_pitch(pitch)).dot(beam2xyz_nor_climb)
+        v_enu_rot = (
+            rotate_head(heading)
+            .dot(rotate_roll(roll))
+            .dot(rotate_pitch(pitch))
+            .dot(beam2xyz_nor_climb)
+        )
         v_enu = v_enu_rot.dot(beam)
         return v_enu
     else:
-        print('Must specify  dive direction')
+        print("Must specify  dive direction")
         exit(1)
 
 
@@ -108,5 +129,5 @@ def beam2xyz(beam_v, dive_limb="Descent"):
         v_xyz = beam2xyz_nor_climb.dot(beam)
         return v_xyz
     else:
-        print('Must specify  dive direction')
+        print("Must specify  dive direction")
         exit(1)
