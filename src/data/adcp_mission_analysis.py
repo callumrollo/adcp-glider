@@ -72,7 +72,7 @@ def centretoedge(x_in):
 
 
 @dataclass
-class adcp_profile:
+class AdcpProfile:
     """
     Class object to store data for a single adcp profile
     """
@@ -103,34 +103,23 @@ class adcp_profile:
     amp_binned: float
 
 
-def read_glider_nc(glider_dir):
-    yos_path = glider_dir.rglob("p*.nc")
-    yos_list = []
-    for path in yos_path:
-        yos_list.append(str(path))
-    nets = np.sort(yos_list)
-    dive_nums, pressure, time, roll, pitch, heading = [], [], [], [], [], []
-
-    for net in nets:
-        nc = xr.open_dataset(net)
-        dive_num = net[-7:-3]
-        dive_nums = dive_nums + list(np.tile(dive_num, (1, len(nc.pressure)))[0])
-        time = time + list(nc.time.data)
-        pressure = pressure + list(nc.pressure.data)
-        roll = roll + list(nc.eng_rollAng.data)
-        pitch = pitch + list(nc.eng_pitchAng.data)
-        heading = heading + list(nc.eng_head.data)
-        temp = nc.temperature.data
-        conductivity = nc.conductivity.data
-        lon = nc.longitude
-        lat = nc.latitude
-    glider_df = pd.DataFrame(
-        {'dive_num': dive_nums, 'pressure_gl': pressure, 'pitch_gl': pitch, 'roll_gl': roll, 'heading_gl': heading},
-        index=pd.to_datetime(time))
-    return glider_df
+def glidertimetoneat(glider_time):
+    time_cont_blank = np.empty(len(glider_time), dtype=datetime)
+    timestamp = []
+    for i in range(len(glider_time)):
+        day = datetime.fromordinal(int(glider_time[i]))
+        dayfrac = timedelta(days=glider_time[i]%1) - timedelta(days = 366)
+        time_cont_blank[i] = day + dayfrac
+        timestamp.append(pd.Timestamp(time_cont_blank[i]))
+    return time_cont_blank, timestamp
 
 
-glider_df = read_glider_nc(Path('/home/callum/Documents/Eureka/data/glider-nc-transfer/full-nc'))
+def read_glider_nc(glider_netcdf_file):
+    glider_nc = xr.open_dataset(glider_netcdf_file)
+    df = glider_nc.to_dataframe()
+    df.rename(columns={'unnamed': 'roll', 'unnamed1': 'pitch', 'unnamed2': 'heading'}, inplace=True)
+    df['glider_time'], df.index = glidertimetoneat(df.index)
+    return df
 
 
 def adcp_import_data(working_dir):
@@ -248,9 +237,9 @@ def adcp_import_data(working_dir):
         amp_binned, __, __ = bin_attr(amp_flag, measurement_z)
         ad2cp_dict = data_av.variables
 
-        profile = adcp_profile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
-                               vel_xyz, vel_enu, beam_miss, flag_bad_data, shear_one_cell, shear_binned, vels_in_bin, vel_referenced,
-                               vel_z, beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict, amp_binned)
+        profile = AdcpProfile(str(index), time, cell_center, pitch, roll, heading, cor_beam, amp_beam, vel_beam,
+                              vel_xyz, vel_enu, beam_miss, flag_bad_data, shear_one_cell, shear_binned, vels_in_bin, vel_referenced,
+                              vel_z, beam_number, pressure, glider_z, measurement_z, glider_w_from_p, ad2cp_dict, amp_binned)
         profiles_dict[index] = profile
     # Add the per profile info to the mission summary
     for extra in extras_list:
