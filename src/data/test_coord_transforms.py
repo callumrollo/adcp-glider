@@ -9,28 +9,44 @@ except NameError:
     library_dir = Path("/media/callum/storage/Documents/adcp-glider/")
 sys.path.append(str(library_dir))
 
-from src.data.beam_mapping import rotate_pitch, rotate_roll, rotate_head
+from src.data.beam_mapping import (
+    calc_beam_angles,
+    rotate_pitch,
+    rotate_roll,
+    rotate_head,
+)
 
 isclose_vec = np.vectorize(isclose)
 vel_xyz = np.array([1.0, -1.0, 2.0])
 
 
-# first test with no rotation, should be no change
+def test_beam_angles():
+    """First test with perfect angles"""
+    assert isclose_vec(calc_beam_angles(0, 0), [47.5, 25, 47.5, 25], abs_tol=1e-5).all()
+    """Pitch up"""
+    assert isclose_vec(
+        calc_beam_angles(90, 0), [42.5, 90, 137.5, 90], abs_tol=1e-5
+    ).all()
+    """ Roll to starboard"""
+    assert isclose_vec(calc_beam_angles(0, 90), [90, 65, 90, 115], abs_tol=1e-5).all()
+
+
 def test_no_rotations():
+    """First test with no rotation, should be no change"""
     assert (rotate_pitch(0).dot(vel_xyz) == vel_xyz).all()
     assert (rotate_roll(0).dot(vel_xyz) == vel_xyz).all()
     assert (rotate_head(90).dot(vel_xyz) == vel_xyz).all()
 
 
-# test with reversing rotations, should be no change
 def test_reverse_rotations():
+    """test with reversing rotations, should be no change"""
     assert (rotate_pitch(-90).dot(rotate_pitch(90)).dot(vel_xyz) == vel_xyz).all()
     assert (rotate_roll(-30).dot(rotate_roll(30)).dot(vel_xyz) == vel_xyz).all()
     assert (rotate_head(180).dot(rotate_head(0)).dot(vel_xyz) == vel_xyz).all()
 
 
-# test with single rotations. Using absolute tolerance of 1e-5
 def test_single_rotations():
+    """test with single rotations. Using absolute tolerance of 1e-5"""
     assert (
         isclose_vec(
             rotate_pitch(90).dot(vel_xyz), np.array([-2.0, -1.0, 1.0]), abs_tol=1e-5
@@ -48,8 +64,8 @@ def test_single_rotations():
     ).all()
 
 
-# test combined rotations
 def test_combi_rotations():
+    """test combined rotations"""
     assert (
         isclose_vec(
             rotate_pitch(-90).dot(rotate_roll(90)).dot(vel_xyz),

@@ -20,9 +20,9 @@ import numpy as np
 def calc_beam_angles(pitch_angle, roll_angle):
     # Returns angles of each beam from the vertical
     z = np.empty(4)
-    z[0] = np.cos(np.deg2rad(47.5 + pitch_angle)) * np.cos(np.deg2rad(roll_angle))
+    z[0] = np.cos(np.deg2rad(47.5 - pitch_angle)) * np.cos(np.deg2rad(roll_angle))
     z[1] = np.cos(np.deg2rad(25 - roll_angle)) * np.cos(np.deg2rad(pitch_angle))
-    z[2] = np.cos(np.deg2rad(47.5 - pitch_angle)) * np.cos(np.deg2rad(roll_angle))
+    z[2] = np.cos(np.deg2rad(47.5 + pitch_angle)) * np.cos(np.deg2rad(roll_angle))
     z[3] = np.cos(np.deg2rad(25 + roll_angle)) * np.cos(np.deg2rad(pitch_angle))
     angles = np.rad2deg(np.arccos(z))
     return angles
