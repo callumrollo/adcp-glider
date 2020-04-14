@@ -15,6 +15,7 @@ from src.data.beam_mapping import (
     rotate_pitch,
     rotate_roll,
     rotate_head,
+    beam2xyz,
 )
 
 isclose_vec = np.vectorize(isclose)
@@ -163,4 +164,15 @@ def test_combi_rotations():
             np.array([1.0, 1.0, -2.0,]),
             abs_tol=1e-5,
         )
+    ).all()
+
+
+def test_beam_xyz():
+    """Test with no velocity"""
+    assert (beam2xyz([0, 0, 0], dive_limb="Descent") == [0.0, 0.0, 0.0]).all()
+    assert (beam2xyz([0, 0, 0], dive_limb="Ascent") == [0.0, 0.0, 0.0]).all()
+    assert isclose_vec(
+        beam2xyz([1, 1, 1], dive_limb="Descent"),
+        [0.34528212104145534, 0.0, 1.1033779189624917],
+        abs_tol=1e-3,
     ).all()
