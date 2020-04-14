@@ -16,6 +16,10 @@ from src.data.beam_mapping import (
     rotate_roll,
     rotate_head,
     beam2xyz,
+    sin,
+    cos,
+    theta,
+    phi,
 )
 
 isclose_vec = np.vectorize(isclose)
@@ -167,12 +171,65 @@ def test_combi_rotations():
     ).all()
 
 
+def check_beam_xyz(beam_in, dive_limb="Ascent"):
+    """
+    Function uses analytical solution to convert beam to xyz velocities.
+    This solution is calculated by projecting teh 3 cartesian unit vectors onto
+    the beams of the AD2CP
+    :param beam_in: list 3 velocities in order from ADCP
+    :param dive_limb: Direction ot travel (ascent or descent)
+    :return: xyz velocity
+    """
+    xyz = [np.nan, np.nan, np.nan]
+    if dive_limb == "Descent":
+        xyz[0] = (
+            ((beam_in[0] + beam_in[2]) * cos(theta)) / (2 * cos(phi)) - beam_in[1]
+        ) / sin(theta)
+        xyz[1] = (beam_in[0] - beam_in[2]) / (2 * sin(phi))
+        xyz[2] = (beam_in[0] + beam_in[2]) / (2 * cos(phi))
+    else:
+        xyz[0] = (
+            -((beam_in[1] + beam_in[2]) * cos(theta)) / (2 * cos(phi)) + beam_in[0]
+        ) / sin(theta)
+        xyz[1] = (beam_in[1] - beam_in[2]) / (2 * sin(phi))
+        xyz[2] = (beam_in[1] + beam_in[2]) / (2 * cos(phi))
+    return xyz
+
+
 def test_beam_xyz():
     """Test with no velocity"""
     assert (beam2xyz([0, 0, 0], dive_limb="Descent") == [0.0, 0.0, 0.0]).all()
     assert (beam2xyz([0, 0, 0], dive_limb="Ascent") == [0.0, 0.0, 0.0]).all()
+    """All beams register positive vel"""
     assert isclose_vec(
         beam2xyz([1, 1, 1], dive_limb="Descent"),
+        [-0.34528212104145534, 0.0, 1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2xyz([1, 1, 1], dive_limb="Ascent"),
         [0.34528212104145534, 0.0, 1.1033779189624917],
-        abs_tol=1e-3,
+        abs_tol=1e-5,
+    ).all()
+    """All beams register negative vel"""
+    assert isclose_vec(
+        beam2xyz([-1, -1, -1], dive_limb="Descent"),
+        [0.34528212104145534, 0.0, -1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2xyz([-1, -1, -1], dive_limb="Ascent"),
+        [-0.34528212104145534, 0.0, -1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    """Arbitrary velocity"""
+    assert isclose_vec(
+        beam2xyz([-1.5, 3, 0.5], dive_limb="Descent"),
+        check_beam_xyz([-1.5, 3, 0.5], dive_limb="Descent"),
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2xyz([4, -2, 0], dive_limb="Ascent"),
+        check_beam_xyz([4, -2, 0], dive_limb="Ascent"),
+        abs_tol=1e-5,
     ).all()

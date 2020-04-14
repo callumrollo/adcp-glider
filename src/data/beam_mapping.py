@@ -92,6 +92,33 @@ beam2xyz_nor_climb = np.array(
     ([0.5056, -1.3564, 0.5056], [-1.1831, 0.0, 1.1831], [0.5518, 0.0, 0.5518])
 )
 
+# temporary command for a lazy boi
+
+
+def sin(angle):
+    return np.sin(np.deg2rad(angle))
+
+
+def cos(angle):
+    return np.cos(np.deg2rad(angle))
+
+
+theta = 47.5
+phi = 25
+
+
+xyz2beam_dive = np.array(
+    ([0, sin(phi), cos(phi)], [-sin(theta), 0, cos(theta)], [0, -sin(phi), cos(phi)])
+)
+
+xyz2beam_climb = np.array(
+    ([sin(theta), 0, cos(theta)], [0, sin(phi), cos(phi)], [0, -sin(phi), cos(phi)])
+)
+
+# Coordinate transform from Callum calculation
+beam2xyz_cal_desce = np.linalg.inv(xyz2beam_dive)
+beam2xyz_cal_climb = np.linalg.inv(xyz2beam_climb)
+
 
 def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
@@ -101,7 +128,7 @@ def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
             rotate_head(heading)
             .dot(rotate_roll(roll))
             .dot(rotate_pitch(pitch))
-            .dot(beam2xyz_nor_desce)
+            .dot(beam2xyz_cal_desce)
         )
         v_enu = v_enu_rot.dot(beam)
         return v_enu
@@ -110,7 +137,7 @@ def beam2enu(beam_v, pitch, roll, heading, dive_limb="Descent"):
             rotate_head(heading)
             .dot(rotate_roll(roll))
             .dot(rotate_pitch(pitch))
-            .dot(beam2xyz_nor_climb)
+            .dot(beam2xyz_cal_climb)
         )
         v_enu = v_enu_rot.dot(beam)
         return v_enu
@@ -123,10 +150,10 @@ def beam2xyz(beam_v, dive_limb="Descent"):
     # Combine all the matrices for a full BEAM to ENU conversion
     beam = np.transpose(np.array(beam_v))
     if dive_limb == "Descent":
-        v_xyz = beam2xyz_nor_desce.dot(beam)
+        v_xyz = beam2xyz_cal_desce.dot(beam)
         return v_xyz
     elif dive_limb == "Ascent":
-        v_xyz = beam2xyz_nor_climb.dot(beam)
+        v_xyz = beam2xyz_cal_climb.dot(beam)
         return v_xyz
     else:
         print("Must specify  dive direction")
