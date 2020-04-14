@@ -36,12 +36,12 @@ def vert_miss(pitch_angle, roll_angle, sample_dist):
         perfect_z = sample_dist * np.cos(np.deg2rad(calc_beam_angles(17.4, 0)))
         actual_z = sample_dist * np.cos(np.deg2rad(beam_angles))
         missmatch = actual_z - perfect_z
-        missmatch[0] = np.nan
+        missmatch[2] = np.nan
     else:
         perfect_z = sample_dist * np.cos(np.deg2rad(calc_beam_angles(-17.4, 0)))
         actual_z = sample_dist * np.cos(np.deg2rad(beam_angles))
         missmatch = actual_z - perfect_z
-        missmatch[2] = np.nan
+        missmatch[0] = np.nan
 
     return missmatch
 
