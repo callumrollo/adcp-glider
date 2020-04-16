@@ -61,7 +61,7 @@ rounder = np.vectorize(rounder)
 
 def edgetocentre(x_in):
     x_out = np.array(x_in)
-    return x_out[:-1] + (x_out[1] - x_out[0]) / 2
+    return np.nanmean([x_out[1:], x_out[:-1]], axis=0)
 
 
 def centretoedge(x_in):
@@ -69,6 +69,15 @@ def centretoedge(x_in):
     x_out[:-1] = x_in - (x_in[1] - x_in[0]) / 2
     x_out[-1] = x_in[-1] + (x_in[1] - x_in[0]) / 2
     return x_out
+
+
+def savefig(figname, extension="png"):
+    plt.savefig(
+        fig_path / str(figname + "." + extension),
+        format=extension,
+        dpi="figure",
+        bbox_inches="tight",
+    )
 
 
 @dataclass
