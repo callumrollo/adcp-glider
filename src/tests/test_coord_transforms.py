@@ -16,6 +16,7 @@ from src.data.beam_mapping import (
     rotate_roll,
     rotate_head,
     beam2xyz,
+    beam2enu,
     sin,
     cos,
     theta,
@@ -231,5 +232,44 @@ def test_beam_xyz():
     assert isclose_vec(
         beam2xyz([4, -2, 0], dive_limb="Ascent"),
         check_beam_xyz([4, -2, 0], dive_limb="Ascent"),
+        abs_tol=1e-5,
+    ).all()
+
+
+def test_beam_enu():
+    """First with 0s"""
+    assert (beam2enu([0, 0, 0], 0, 0, 0, dive_limb="Descent") == [0.0, 0.0, 0.0]).all()
+    assert (beam2enu([0, 0, 0], 0, 0, 0, dive_limb="Ascent") == [0.0, 0.0, 0.0]).all()
+    """All beams register positive vel"""
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 0, 0, 90, dive_limb="Descent"),
+        [-0.34528212104145534, 0.0, 1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 0, 0, 90, dive_limb="Ascent"),
+        [0.34528212104145534, 0.0, 1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    """Rotate heading"""
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 0, 0, 0, dive_limb="Descent"),
+        [0.0, -0.34528212104145534, 1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 0, 0, 270, dive_limb="Ascent"),
+        [-0.34528212104145534, 0.0, 1.1033779189624917],
+        abs_tol=1e-5,
+    ).all()
+    """Rotations of roll and pitch"""
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 0, 45, 0, dive_limb="Descent"),
+        [0.7802060087098789, -0.34528212104145534, 0.7802060087098789],
+        abs_tol=1e-5,
+    ).all()
+    assert isclose_vec(
+        beam2enu([1, 1, 1], 45, 0, 90, dive_limb="Ascent"),
+        [-0.5360546794989914, 0.0, 1.0243573379207662],
         abs_tol=1e-5,
     ).all()
