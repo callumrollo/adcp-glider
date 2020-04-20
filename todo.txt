@@ -1,3 +1,4 @@
+calcualte geostrophic shear from glider
 use multiproc to speed up data import, probably y passing subset dives to adcp_import_data (doesn't work, can't pickle the data structures)
 correct for velocity. ADCP uses its own calcualted temp and a salinity of 35 ppt
 do naive shear estimate

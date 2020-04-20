@@ -71,15 +71,6 @@ def centretoedge(x_in):
     return x_out
 
 
-def savefig(figname, extension="png"):
-    plt.savefig(
-        fig_path / str(figname + "." + extension),
-        format=extension,
-        dpi="figure",
-        bbox_inches="tight",
-    )
-
-
 @dataclass
 class AdcpProfile:
     """
