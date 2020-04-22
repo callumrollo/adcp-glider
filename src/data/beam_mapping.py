@@ -13,6 +13,12 @@ transducer head numbers:
 3 fore
 4 port
 
+head numbers from Signature manual:
+1 fore
+2 port
+3 aft
+4 starboard
+
 """
 import numpy as np
 
