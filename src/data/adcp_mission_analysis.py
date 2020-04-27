@@ -118,10 +118,11 @@ def glidertimetoneat(glider_time):
 def read_glider_nc(glider_netcdf_file):
     glider_nc = xr.open_dataset(glider_netcdf_file)
     df = glider_nc.to_dataframe()
-    df.rename(
-        columns={"unnamed": "roll", "unnamed1": "pitch", "unnamed2": "heading"},
-        inplace=True,
-    )
+    if "unnamed" in df.columns:
+        df.rename(
+            columns={"unnamed": "roll", "unnamed1": "pitch", "unnamed2": "heading"},
+            inplace=True,
+        )
     df["glider_time"], df.index = glidertimetoneat(df.index)
     return df
 
