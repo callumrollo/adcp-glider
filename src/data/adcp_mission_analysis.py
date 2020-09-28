@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import copy
 import gsw
+import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import xarray as xr
 from pathlib import Path
@@ -397,11 +398,13 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         index=pd.to_datetime(time),
     )
     beam_attrs = beam_attrs.astype(float)
+    beam_attrs["dive_num"] = pd.to_numeric(beam_attrs.index.str[:-1])
+    beam_attrs["dive_num"][beam_attrs.index.str[-1] == "b"] += 0.5
     if combine:
         mission_summary = mission_summary.join(beam_attrs)
-        return mission_summary, beam_attrs
+        return mission_summary, adcp_df
     else:
-        return beam_attrs, beam_attrs
+        return beam_attrs, adcp_df
 
 
 ################################################################################
@@ -453,3 +456,12 @@ def shear_to_vel(shear_av, bin_centers, ref_vel=None):
     vel[nans] = np.nan
     vel_referenced = vel - np.tile(np.nanmean(vel, 0) - ref_vel, (len(bin_centers), 1))
     return vel_referenced, bin_centers
+
+
+def savefig(figname, extension="png"):
+    plt.savefig(
+        fig_path / str(figname + "." + extension),
+        format=extension,
+        dpi="figure",
+        bbox_inches="tight",
+    )
