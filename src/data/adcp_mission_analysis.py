@@ -396,15 +396,12 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         },
         index=pd.to_datetime(time),
     )
-    # hotfix as dive 5 appears to be a bench test...
-    bar = adcp_df[adcp_df.cast_num != "0005a"]
-    baz = bar[bar.cast_num != "0005b"]
     beam_attrs = beam_attrs.astype(float)
     if combine:
         mission_summary = mission_summary.join(beam_attrs)
-        return mission_summary, baz
+        return mission_summary, beam_attrs
     else:
-        return beam_attrs, baz
+        return beam_attrs, beam_attrs
 
 
 ################################################################################
