@@ -456,12 +456,3 @@ def shear_to_vel(shear_av, bin_centers, ref_vel=None):
     vel[nans] = np.nan
     vel_referenced = vel - np.tile(np.nanmean(vel, 0) - ref_vel, (len(bin_centers), 1))
     return vel_referenced, bin_centers
-
-
-def savefig(figname, extension="png"):
-    plt.savefig(
-        fig_path / str(figname + "." + extension),
-        format=extension,
-        dpi="figure",
-        bbox_inches="tight",
-    )
