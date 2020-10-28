@@ -1,4 +1,7 @@
-adcp-glider-processing
+[![DOI](https://zenodo.org/badge/219780450.svg)](https://zenodo.org/badge/latestdoi/219780450)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+adcp-glider
 ==============================
 
 Tools for setting up, running and processing data from a Seaglider fitted with a Nortek 1MHz.
