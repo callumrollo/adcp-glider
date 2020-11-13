@@ -2,16 +2,17 @@
 Functions to analyse the bulk data from the whole adcp_mission_overview
 """
 import sys
+import warnings
 import numpy as np
 import pandas as pd
 import copy
 import gsw
-import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import xarray as xr
 from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+from tqdm import tqdm
 
 try:
     library_dir = Path(__file__).parent.parent.parent.absolute()
@@ -22,6 +23,10 @@ from src.data.beam_mapping import beam2enu, beam_from_center, beam2xyz
 
 # todo hard coded for now. Will fix
 mission_lat = 13
+
+# filter warnings from all nan slices
+warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+warnings.filterwarnings(action="ignore", message="Mean of empty slice")
 
 
 def list_yos(working_dir):
@@ -79,21 +84,21 @@ class AdcpProfile:
     """
 
     name: str
-    time: datetime
+    time: np.ndarray
     cell_center: float
     pitch: float
     roll: float
     heading: float
-    cor_beam: float
-    amp_beam: float
-    vel_beam: float
-    vel_xyz: float
-    vel_enu: float
+    cor_beam: np.ndarray
+    amp_beam: np.ndarray
+    vel_beam: np.ndarray
+    vel_xyz: np.ndarray
+    vel_enu: np.ndarray
     beam_miss: float
-    flag_bad_data: bool
+    flag_bad_data: np.ndarray
     shear_one_cell: float
-    shear_binned: float
-    no_in_bin: float
+    shear_binned: np.ndarray
+    no_in_bin: np.ndarray
     vel_referenced: float
     vel_z: float
     beam_number: float
@@ -102,7 +107,7 @@ class AdcpProfile:
     measurement_z: float
     glider_w_from_p: float
     ad2cp_dict: dict
-    amp_binned: float
+    amp_binned: np.ndarray
 
 
 def glidertimetoneat(glider_time):
@@ -128,7 +133,7 @@ def read_glider_nc(glider_netcdf_file):
     return df
 
 
-def adcp_import_data(working_dir):
+def adcp_import_data(working_dir, incorrect_beams=False):
     """
 
     :param working_dir: Path to the directory where your adcp *.nc files are stored
@@ -157,7 +162,7 @@ def adcp_import_data(working_dir):
         "vert_direction",
     ]
     # Intialise the data dictionary
-    for index, file_path in zip(mission_summary.index, mission_summary.file_path):
+    for index, file_path in tqdm(zip(mission_summary.index, mission_summary.file_path)):
         adcp_dict = {}
         # Unpack the desired data from the nc files into the dict for each profile
         # Todo   config. then tab for autocomplete, has data on all config stuff
@@ -178,8 +183,16 @@ def adcp_import_data(working_dir):
         adcp_profiles_dict_temp[index] = adcp_dict
         raw_data = ad2cp_groups["Data"]
         data_av = raw_data["Average"]
-        # pretty time for plots
 
+        # If the ADCP was using the wrong beams, use the corresponding matrix to convert to XYZ and ENU
+        adcp_direction = adcp_dict["vert_direction"]
+        if incorrect_beams:
+            if adcp_dict["vert_direction"] == "Descent":
+                adcp_direction = "Ascent"
+            else:
+                adcp_direction = "Descent"
+
+        # pretty time for plots
         time_secondsfrom1970 = data_av["time"][:]
         time = np.empty([len(time_secondsfrom1970)], dtype=datetime)
 
@@ -209,7 +222,6 @@ def adcp_import_data(working_dir):
         # should really use glider's density profile
         pressure = data_av["Pressure"][:]
         # glider_z = 0.7 + gsw.z_from_p(pressure, 50)
-        # todo # Sort out gsw and document how to get it
         glider_z = gsw.z_from_p(pressure, mission_lat)
         dz = glider_z[1:] - glider_z[:-1]
         dt_datetime = time[1:] - time[:-1]
@@ -232,7 +244,7 @@ def adcp_import_data(working_dir):
         for sample in np.arange(np.size(vel_beam, 0)):
             for cell in np.arange(np.size(vel_beam, 1)):
                 vel_xyz[sample, cell, :] = beam2xyz(
-                    vel_beam[sample, cell, :], dive_limb=adcp_dict["vert_direction"]
+                    vel_beam[sample, cell, :], dive_limb=adcp_direction
                 )
         vel_enu = copy.deepcopy(vel_beam)
         vel_enu[:] = np.nan
@@ -243,7 +255,7 @@ def adcp_import_data(working_dir):
                     pitch[sample],
                     roll[sample],
                     heading[sample],
-                    dive_limb=adcp_dict["vert_direction"],
+                    adcp_direction,
                 )
         beam_miss = beam_from_center(
             np.transpose(np.tile(pitch, (len(cell_center), 1))),

@@ -91,10 +91,10 @@ def rotate_head(heading):
 
 
 # Coordinate transform from adcp files. config
-beam2xyz_nor_climb = np.array(
+beam2xyz_nor_desce = np.array(
     ([1.3564, -0.5056, -0.5056], [0.0, -1.1831, 1.1831], [0.0, 0.5518, 0.5518])
 )
-beam2xyz_nor_desce = np.array(
+beam2xyz_nor_climb = np.array(
     ([0.5056, -1.3564, 0.5056], [-1.1831, 0.0, 1.1831], [0.5518, 0.0, 0.5518])
 )
 
