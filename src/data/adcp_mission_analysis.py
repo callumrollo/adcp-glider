@@ -352,6 +352,7 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
     )
 
     cast_num, pressure, time, roll, pitch, heading = [], [], [], [], [], []
+    u, v, w, u_prime, v_prime, w_prime = [], [], [], [], [], []
     for cycle in mission_summary.index:
         cycle_dict = profiles_dict[cycle].ad2cp_dict
         physical_beam = cycle_dict["Physicalbeam"][0, :]
@@ -399,6 +400,12 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
         pitch = pitch + list(profiles_dict[cycle].pitch)
         roll = roll + list(profiles_dict[cycle].roll)
         heading = heading + list(profiles_dict[cycle].heading)
+        u = u + list(profiles_dict[cycle].vel_xyz[:, 0, 0])
+        v = v + list(profiles_dict[cycle].vel_xyz[:, 0, 1])
+        w = w + list(profiles_dict[cycle].vel_xyz[:, 0, 2])
+        u_prime = u_prime + list(profiles_dict[cycle].vel_enu[:, 0, 0])
+        v_prime = v_prime + list(profiles_dict[cycle].vel_enu[:, 0, 1])
+        w_prime = w_prime + list(profiles_dict[cycle].vel_enu[:, 0, 2])
     adcp_df = pd.DataFrame(
         {
             "cast_num": cast_num,
@@ -406,6 +413,12 @@ def add_dive_averages(mission_summary, profiles_dict, combine=False):
             "pitch_ad": pitch,
             "roll_ad": roll,
             "heading_ad": heading,
+            "u": u,
+            "v": v,
+            "w": w,
+            "u_prime": u_prime,
+            "v_prime": v_prime,
+            "w_prime": w_prime,
         },
         index=pd.to_datetime(time),
     )
